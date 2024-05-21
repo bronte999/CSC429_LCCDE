@@ -26,7 +26,7 @@ The road_work code expects the file tree to have the original dataset in the rel
     * ambient/
       * ambient_dyno_drive_basic_long.log
       * ...
-    * attacks
+    * attacks/
       * accelerator_attack_drive_1.log
       * ...
   * **road_work.py**
