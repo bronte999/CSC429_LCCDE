@@ -16,7 +16,7 @@ To use a different set of labels (e.g. Benign, Accelerator, Fuzzing, Fabrication
 \
 The 33 individual attacks can be found in "data/processed-road/attacks/", and the zipped .csv file containing all of the attacks is "data/processed-road/road.csv.zip" (zipped due to GitHub file size constraints).
 The code for data processing is in the file "data/road_work.py". The ambient data is not converted due to large file size, but (untested) code to convert the ambient data is provided.
-The road_work code expects the file tree to have the original dataset in the relative "./road-dataset/" directory, as follows:
+The road_work code expects the original dataset to be in the relative "./road-dataset/" directory, as follows:
 
 * data/
   * processed-road/
