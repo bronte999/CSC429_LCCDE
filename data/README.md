@@ -9,10 +9,10 @@ Research paper: \
 ## Processing
 The original dataset had raw CAN captures in .log files and translated the captures to signals in .csv files. 
 We converted the .log files to .csv files with the features: Time, Id, Byte1, Byte2, Byte3, Byte4, Byte5, Byte6, Byte7, Byte8, Label. 
-Since the timestamps are shifted uniformly by a scalar for each individual file, we recommend excluding the Time column when you use the dataset.
+Since the timestamps are shifted uniformly by a scalar for each individual file, we recommend excluding the Time column or doing further processing when you use the dataset.
 In addition, we used the provided metadata to label the captures as a type of attack or benign. 
-The labels are: Benign, Accelerator, Fuzzing, CorrelatedSignal, MaxEngineCoolantTemp, MaxSpeedometer, ReverseLight. 
-To use a different set of labels (e.g. Benign, Accelerator, Fuzzing, Fabrication, Masquerade), you can modify the get_attack_label function in "data/road_work.py", or change the label column in the individual attack files. \
+The labels are: Benign, Accelerator, Fuzzing, Fabrication, Masquerade. 
+To use a different set of labels, you can modify the get_attack_label function in "data/road_work.py", or change the label column in the individual attack files (see change_labels.py). \
 \
 The 33 individual attacks can be found in "data/processed-road/attacks/", and the zipped .csv file containing all of the attacks is "data/processed-road/road.csv.zip" (zipped due to GitHub file size constraints).
 The code for data processing is in the file "data/road_work.py". The ambient data is not converted due to large file size, but (untested) code to convert the ambient data is provided.

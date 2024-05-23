@@ -40,8 +40,12 @@ def within_interval(timestamp: float, interval: Optional[tuple[float, float]]) -
     return interval[0] <= timestamp <= interval[1]
 
 
-def get_attack_label(attack_name: str) -> str:
-    """Defines the Labels for attacks."""
+def get_attack_label_OLD(attack_name: str) -> str:
+    """Defines the Labels for attacks.
+    NOTE: this was used for the original labels, but we determined that the
+    original labels were too specific and not very useful. See the
+    updated get_attack_label function for better labels.
+    """
     labels = {"accelerator": "Accelerator",
            "fuzzing": "Fuzzing",
            "correlated_signal": "CorrelatedSignal",
@@ -54,6 +58,19 @@ def get_attack_label(attack_name: str) -> str:
             return labels[k]
     # attacks should all be in the dict of labels
     raise ValueError("unexpected attack type")
+
+
+def get_attack_label(attack_name: str) -> str:
+    """Defines the Labels for attacks based on the name of the file."""
+    if "accelerator" in attack_name:
+        return "Accelerator"
+    elif "fuzzing" in attack_name:
+        return "Fuzzing"
+    elif "masquerade" in attack_name:
+        return "Masquerade"
+    else:
+        # label the rest as fabrication
+        return "Fabrication"
 
 
 def get_inj_id(inj_id: Optional[str]) -> Optional[str]:
@@ -177,20 +194,22 @@ def logs_to_csvs():
                                       metadata[file],
                                       file)
             print()
+    print("\n\nfinished converting attack logs to csv\n\n")
 
-    # convert the ambient log files to csv
-    ambient_finished = listdir(ambient_out_path)
-    with open(ambient_in_path + "capture_metadata.json", "r") as f:
-        metadata = json.load(f)
-        for file in metadata.keys():
-            if file + ".csv" in ambient_finished:
-                print("skipping {f}".format(f=file))
-            else:
-                print("starting {f}...".format(f=file))
-                convert_ambient_to_csv(ambient_in_path + file + ".log",
-                                       ambient_out_path + file + ".csv",
-                                       features)
-            print()
+    # uncomment this to convert the ambient log files to csv (this part is not tested)
+    # ambient_finished = listdir(ambient_out_path)
+    # with open(ambient_in_path + "capture_metadata.json", "r") as f:
+    #     metadata = json.load(f)
+    #     for file in metadata.keys():
+    #         if file + ".csv" in ambient_finished:
+    #             print("skipping {f}".format(f=file))
+    #         else:
+    #             print("starting {f}...".format(f=file))
+    #             convert_ambient_to_csv(ambient_in_path + file + ".log",
+    #                                    ambient_out_path + file + ".csv",
+    #                                    features)
+    #         print()
+    # print("\n\nfinished converting ambient logs to csv\n\n")
 
 
 def combine_csvs():
@@ -203,9 +222,9 @@ def combine_csvs():
     out_dir = "processed-road/"
     out_file = "road.csv"
 
-    print("combining csvs in", in_dirs)
     write_header = True
     for d in in_dirs:
+        print("\n\ncombining csvs in {d}...\n\n".format(d=d))
         for file in listdir(d):
             file = d + file  # relative path to file
             if file.endswith(".csv"):
@@ -215,11 +234,14 @@ def combine_csvs():
                 df.to_csv(out_dir + out_file, mode="a",
                           index=False,
                           header=write_header)
-                print("appended data from {i} to {o}".format(i=file, o=out_dir + out_file))
+                print("appended data from {i} to {o}\n".format(i=file, o=out_dir + out_file))
                 write_header = False  # only write header once
+        print("\n\nfinished combining csvs in {d}\n\n".format(d=d))
 
 
 def main():
+    # currently, this is set up to convert attack .log files to .csv,
+    # see the function implementations to also include ambient data
     logs_to_csvs()
     combine_csvs()
 
