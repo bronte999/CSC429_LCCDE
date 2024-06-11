@@ -42,7 +42,7 @@ class TestAllUnique(unittest.TestCase):
 class TestLCCDE_predict_class(unittest.TestCase):
     def test_all_equal_path_with_all_matching_models(self):
         xi = pd.Series(["a", "b"])
-        models = [LCCDE_Model(FraudModel()), LCCDE_Model(FraudModel())]
+        models = [LCCDE_Model(FraudModel(), "m1"), LCCDE_Model(FraudModel(), "m2")]
         # both models agree on predicted class
         expected_predicted_class = "Benign"
         models[0].predicted_class = expected_predicted_class
@@ -52,8 +52,8 @@ class TestLCCDE_predict_class(unittest.TestCase):
                          LCCDE_predict_class(xi, models, dict()))
     def test_all_unique_path_with_one_matching_model(self):
         xi = pd.Series(["a", "b"])
-        model1 = LCCDE_Model(FraudModel())
-        model2 = LCCDE_Model(FraudModel())
+        model1 = LCCDE_Model(FraudModel(), "m1")
+        model2 = LCCDE_Model(FraudModel(), "m2")
         # models disagree on predicted class
         expected_predicted_class = "Benign"
         different_predicted_class = "Masquerade"
@@ -67,8 +67,8 @@ class TestLCCDE_predict_class(unittest.TestCase):
                          LCCDE_predict_class(xi, [model1, model2], leader_models))
     def test_all_unique_path_with_zero_matching_models(self):
         xi = pd.Series(["a", "b"])
-        model1 = LCCDE_Model(FraudModel())
-        model2 = LCCDE_Model(FraudModel())
+        model1 = LCCDE_Model(FraudModel(), "m1")
+        model2 = LCCDE_Model(FraudModel(), "m2")
         # set model1 to higher confidence
         model1.highest_predicted_prob = 1
         model2.highest_predicted_prob = 0.5
@@ -85,9 +85,9 @@ class TestLCCDE_predict_class(unittest.TestCase):
     def test_else_path_with_some_matching_models(self):
         xi = pd.Series(["a", "b"])
         expected_predict_result = 69  # we want model1.predict() to be called and return this
-        model1 = LCCDE_Model(FraudModel(prediction=expected_predict_result))
-        model2 = LCCDE_Model(FraudModel())
-        model3 = LCCDE_Model(FraudModel())
+        model1 = LCCDE_Model(FraudModel(prediction=expected_predict_result), "m1")
+        model2 = LCCDE_Model(FraudModel(), "m2")
+        model3 = LCCDE_Model(FraudModel(), "m3")
         # models disagree on predicted class, but majority is expected_predicted_class
         predicted_class = "Benign"
         different_predicted_class = "Masquerade"
@@ -109,13 +109,13 @@ class TestLCCDE(unittest.TestCase):
         X_test = pd.DataFrame([["a", "b", "c"]])
         y_test = pd.Series([correct_pred])
         # base_learner1.predict() returns correct_pred
-        base_learner1 = FraudModel(prediction=correct_pred)
-        base_learner2 = FraudModel(prediction=wrong_pred)
+        model1 = LCCDE_Model(FraudModel(prediction=correct_pred), "m1")
+        model2 = LCCDE_Model(FraudModel(prediction=wrong_pred), "m2")
         # base_learner1 is leader for correct_pred class
-        leader_models = {correct_pred: base_learner1, wrong_pred: base_learner2}
+        leader_models = {correct_pred: model1.model, wrong_pred: model2.model}
         # should return y_test labels as a list, and a list of predicted values
         self.assertEqual((list(y_test), [correct_pred]),
-                         LCCDE(X_test, y_test, [base_learner1, base_learner2], leader_models))
+                         LCCDE(X_test, y_test, [model1, model2], leader_models))
 
 
 if __name__ == '__main__':
