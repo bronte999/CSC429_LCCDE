@@ -8,6 +8,35 @@ from statistics import mode
 import numpy as np
 
 
+class LCCDE_Model:
+    """Represents a base learner in the Leader Class and Confidence Decision Ensemble (LCCDE)."""
+    def __init__(self, model, name: str):
+        # base learner object that should have the predict() and predict_proba() functions (e.g. XGBClassifier())
+        self.model = model
+        # string name
+        self.name = name
+        # the following attributes are for evaluation metrics
+        self.accuracy = None
+        self.precision = None
+        self.recall = None
+        self.f1_avg = None  # average of F1 scores
+        self.f1 = None  # list of F1 scores for each class
+        # the following attributes are for storing predictions for one data point
+        self.predicted_class = None  # predicted class
+        self.highest_predicted_prob = None  # class with highest confidence score
+
+    def __repr__(self):
+        return "LCCDE_Model({m}, {n})".format(m=self.model, n=self.name)
+
+    # this method is not tested here
+    # def store_eval_metrics(self, y_test, y_pred):
+    #     self.accuracy = accuracy_score(y_test, y_pred)
+    #     self.precision = precision_score(y_test, y_pred, average='weighted')
+    #     self.recall = recall_score(y_test, y_pred, average='weighted')
+    #     self.f1_avg = f1_score(y_test, y_pred, average='weighted')
+    #     self.f1 = f1_score(y_test, y_pred, average=None)
+
+
 def all_equal(iterable):
     """Returns whether all values in an Iterable are equal
     (https://stackoverflow.com/a/3844832).
@@ -24,14 +53,6 @@ def all_unique(lst):
     unique_elements, counts = np.unique(lst, return_counts=True)
     # return True if all elements in the list are unique (i.e., the counts are all 1)
     return all(counts == 1)
-
-
-class LCCDE_Model:
-    """Basically a struct containing data for a base learner in the LCCDE."""
-    def __init__(self, model):
-        self.model = model  # base learner
-        self.predicted_class = None  # predicted class
-        self.highest_predicted_prob = None  # class with highest confidence score
 
 
 def LCCDE_predict_class(xi, models: list[LCCDE_Model], leader_models: dict):
@@ -71,20 +92,21 @@ def LCCDE_predict_class(xi, models: list[LCCDE_Model], leader_models: dict):
     return final_pred_class
 
 
-def LCCDE(X_test, y_test, base_learners, leader_models) -> tuple[list, list]:
+def LCCDE(X_test, y_test, models: list[LCCDE_Model], leader_models, verbose=False) -> tuple[list, list]:
     """Uses the Leader Class and Confidence Decision Ensemble (LCCDE) to
     classify records in a feature matrix. Casts predicted labels to ints.
     Returns a tuple containing ground truth labels and predicted labels.
     :param X_test: feature matrix for testing (pandas DataFrame)
     :param y_test: ground truth Labels corresponding to X_test
-    :param base_learners: a list of the base learners for the ensemble (they should have the predict() and predict_proba() functions)
+    :param models: a list of the LCCDE_Model objects
     :param leader_models: a dictionary with Labels as keys, the value of each key should be a model in base_learners
+    :param verbose: if True, prints a progress update after every 1000 predictions
     """
     y_actual = []  # list of actual y-values (I think it ends up being the same as the y_test parameter)
     y_predicted = []  # the values predicted by the ensemble for each xi in X_test
-    models = [LCCDE_Model(m) for m in base_learners]  # convert base learners into LCCDE_Model objects
 
-    # for each class (normal or a type of attack), find the leader model
+    count = 0
+    # predict each label based on the features
     for xi, yi in stream.iter_pandas(X_test, y_test):
         xi = np.array(list(xi.values())).reshape(1, -1)
 
@@ -100,5 +122,9 @@ def LCCDE(X_test, y_test, base_learners, leader_models) -> tuple[list, list]:
         # save the actual and predicted y-values
         y_actual.append(yi)
         y_predicted.append(final_pred_class)
+
+        count += 1
+        if verbose and count % 1000 == 0:
+            print("Progress update: LCCDE has predicted {n} values".format(n=count))
 
     return y_actual, y_predicted
